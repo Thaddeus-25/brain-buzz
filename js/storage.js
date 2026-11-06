@@ -3,7 +3,7 @@
 
 const key = (mode) => `brainBuzz.best.${mode}`;
 
-function defaultStore() {
+export function defaultStore() {
   try {
     return window.localStorage;
   } catch {

@@ -2,16 +2,11 @@
 // The player must pick the INK color, not the word.
 import { pick, shuffle, el } from '../util.js';
 
-export const COLORS = [
-  { name: 'RED', hex: '#ff5c5c' },
-  { name: 'BLUE', hex: '#4d9bff' },
-  { name: 'GREEN', hex: '#3ddc84' },
-  { name: 'YELLOW', hex: '#ffd23f' },
-  { name: 'PURPLE', hex: '#c084ff' },
-  { name: 'ORANGE', hex: '#ff9f43' },
-];
+// The actual color values live in style.css (--ink-red, ...) so each theme
+// can use shades that stay readable on its background.
+export const COLORS = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'PURPLE', 'ORANGE'].map((name) => ({ name }));
 
-const hexOf = (name) => COLORS.find((c) => c.name === name).hex;
+const cssColor = (name) => `var(--ink-${name.toLowerCase()})`;
 
 export default {
   id: 'colorClash',
@@ -36,13 +31,13 @@ export default {
   render(challenge, container, submit) {
     container.append(
       el('p', { class: 'hint' }, 'Pick the INK color'),
-      el('div', { class: 'big clash-word', style: `color:${hexOf(challenge.ink)}` }, challenge.word),
+      el('div', { class: 'big clash-word', style: `color:${cssColor(challenge.ink)}` }, challenge.word),
     );
     const buttons = challenge.options.map((name, i) => {
       const btn = el(
         'button',
         { type: 'button', class: 'btn color-btn' },
-        el('span', { class: 'swatch', style: `background:${hexOf(name)}` }),
+        el('span', { class: 'swatch', style: `background:${cssColor(name)}` }),
         el('span', {}, name),
         el('kbd', {}, String(i + 1)),
       );

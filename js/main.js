@@ -1,10 +1,11 @@
-// The game loop: switches screens, runs rounds, tracks timer / lives / score.
+// The game loop: switches screens, runs rounds, tracks timer / lives / score, pausing.
 import { ROUNDS } from './rounds/index.js';
 import {
   ENDLESS_LIVES, SPRINT_SECONDS, SPRINT_PENALTY_SECONDS,
   levelFor, roundSeconds, pointsFor, pickRound,
 } from './game.js';
 import { loadBest, saveBest } from './storage.js';
+import { initTheme } from './theme.js';
 
 const $ = (id) => document.getElementById(id);
 const screens = { menu: $('menu'), game: $('game'), results: $('results') };
@@ -35,7 +36,8 @@ function startGame(mode) {
     correct: 0,
     lives: ENDLESS_LIVES,
     sprintEnd: performance.now() + SPRINT_SECONDS * 1000, // only used in sprint
-    pausedAt: null, // sprint clock pauses while showing feedback
+    frozenAt: null, // sprint clock is frozen (feedback or pause) since this time
+    paused: false,
     lastId: null,
     round: null,
     challenge: null,
@@ -45,7 +47,7 @@ function startGame(mode) {
     roundMs: 0,
     roundDeadline: null,
     tickId: setInterval(tick, 100),
-    pauseId: null,
+    feedbackId: null,
   };
   show('game');
   nextRound();
@@ -53,9 +55,10 @@ function startGame(mode) {
 
 /** Clears every timer and listener so nothing fires after the game ends. */
 function stopGame() {
+  $('pause-overlay').hidden = true;
   if (!state) return;
   clearInterval(state.tickId);
-  clearTimeout(state.pauseId);
+  clearTimeout(state.feedbackId);
   state.cleanup?.();
   state = null;
 }
@@ -73,6 +76,16 @@ function endGame() {
     + (isNewBest ? '' : ` · best ${best}`);
   show('results');
   $('again').focus();
+}
+
+// ---------- Sprint clock ----------
+function freezeClock() {
+  if (state.mode === 'sprint' && state.frozenAt === null) state.frozenAt = performance.now();
+}
+function unfreezeClock() {
+  if (state.frozenAt === null) return;
+  state.sprintEnd += performance.now() - state.frozenAt; // frozen time doesn't count
+  state.frozenAt = null;
 }
 
 // ---------- Rounds ----------
@@ -126,32 +139,61 @@ function resolve(correct, timedOut) {
     delay = 1100;
   }
 
-  if (state.mode === 'sprint') state.pausedAt = performance.now();
+  freezeClock(); // don't spend sprint time while showing feedback
   updateHud();
 
-  state.pauseId = setTimeout(() => {
+  state.feedbackId = setTimeout(() => {
+    state.feedbackId = null;
     state.cleanup?.();
     state.cleanup = null;
-    if (state.mode === 'endless' && state.lives <= 0) return endGame();
-    if (state.mode === 'sprint') {
-      state.sprintEnd += performance.now() - state.pausedAt; // don't count the pause
-      state.pausedAt = null;
-      if (state.sprintEnd <= performance.now()) return endGame(); // penalty ran the clock out
-    }
-    nextRound();
+    continueGame();
   }, delay);
+}
+
+/** After feedback or a pause: end the game if it's over, otherwise start a new round. */
+function continueGame() {
+  unfreezeClock();
+  if (state.mode === 'endless' && state.lives <= 0) return endGame();
+  if (state.mode === 'sprint' && state.sprintEnd <= performance.now()) return endGame();
+  nextRound();
+}
+
+// ---------- Pause ----------
+function pauseGame() {
+  if (!state || state.paused) return;
+  state.paused = true;
+  // Throw away the current round (and any pending feedback) so it can't be studied while paused.
+  state.accepting = false;
+  state.roundDeadline = null;
+  clearTimeout(state.feedbackId);
+  state.feedbackId = null;
+  state.cleanup?.();
+  state.cleanup = null;
+  freezeClock();
+  $('challenge').replaceChildren();
+  $('feedback').textContent = '';
+  $('pause-overlay').hidden = false;
+  $('resume').focus();
+}
+
+function resumeGame() {
+  if (!state || !state.paused) return;
+  state.paused = false;
+  $('pause-overlay').hidden = true;
+  continueGame(); // fresh challenge at the same level
 }
 
 // ---------- Timer + HUD ----------
 function tick() {
+  if (state.paused) return;
   const now = performance.now();
   if (state.mode === 'sprint') {
-    const left = state.sprintEnd - (state.pausedAt ?? now); // frozen while paused
+    const left = state.sprintEnd - (state.frozenAt ?? now); // stays still while frozen
     setTimerBar(left / (SPRINT_SECONDS * 1000));
     const seconds = document.createElement('b');
     seconds.textContent = `${Math.max(0, Math.ceil(left / 1000))}s`;
     $('hud-status').replaceChildren('Time ', seconds);
-    if (left <= 0 && state.pausedAt === null) endGame();
+    if (left <= 0 && state.frozenAt === null) endGame();
   } else if (state.accepting && state.roundDeadline !== null) {
     if (now < state.roundStart) {
       setTimerBar(1); // memory round: still studying
@@ -190,14 +232,22 @@ function setFeedback(text, kind) {
 }
 
 // ---------- Wire up buttons and keys ----------
+initTheme($('theme-toggle'));
 document.querySelectorAll('.mode').forEach((btn) => {
   btn.addEventListener('click', () => startGame(btn.dataset.mode));
 });
-$('quit').addEventListener('click', showMenu);
+$('pause').addEventListener('click', pauseGame);
+$('resume').addEventListener('click', resumeGame);
+$('pause-quit').addEventListener('click', showMenu);
 $('again').addEventListener('click', () => startGame(lastMode));
 $('to-menu').addEventListener('click', showMenu);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state) showMenu();
+  if (e.key !== 'Escape' || !state) return;
+  if (state.paused) resumeGame();
+  else pauseGame();
 });
+// Auto-pause when you switch tabs or windows, so you don't lose lives while away.
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+window.addEventListener('blur', pauseGame);
 
 showMenu();

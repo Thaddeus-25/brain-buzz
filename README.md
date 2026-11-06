@@ -23,6 +23,12 @@ Rounds are picked at random (never the same twice in a row) and get harder every
 
 Correct answers are worth 10 points plus a streak bonus (up to +20). Best scores are saved in your browser.
 
+## Controls
+
+- **Esc** or the **Pause** button pauses the game and freezes all timers. Press Esc again (or **Resume**) to continue with a fresh challenge, or choose **Quit to menu**.
+- The game also pauses itself when you switch tabs or windows.
+- The **☀ / ☾** button (top right) switches between dark and light themes. Until you pick one, it follows your computer's setting.
+
 ## Run locally
 
 The game uses JavaScript modules, which browsers won't load from a double-clicked file.
@@ -45,6 +51,7 @@ index.html, style.css     the page and its look
 js/main.js                game loop: screens, timers, lives, score
 js/game.js                pure rules: levels, timers, points, round picking
 js/storage.js             best scores (localStorage)
+js/theme.js               dark/light theme toggle
 js/rounds/*.js            one file per round type, all with the same interface
 js/tests.js, tests.html   tests
 ```

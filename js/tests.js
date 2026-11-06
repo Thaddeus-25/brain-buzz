@@ -6,6 +6,7 @@ import oddOneOut from './rounds/oddOneOut.js';
 import { ROUNDS } from './rounds/index.js';
 import { levelFor, roundSeconds, pointsFor, pickRound } from './game.js';
 import { loadBest, saveBest } from './storage.js';
+import { resolveTheme, loadSavedTheme, saveTheme } from './theme.js';
 
 const results = [];
 function test(name, fn) {
@@ -141,6 +142,27 @@ test('storage: blocked or missing storage falls back safely', () => {
   assert(saveBest('endless', 5, broken) === false);
   assert(loadBest('endless', null) === 0);
   assert(saveBest('endless', 5, null) === false);
+});
+
+// --- Theme ---
+test('theme: a saved choice wins over the system setting', () => {
+  assert(resolveTheme('light', true) === 'light');
+  assert(resolveTheme('dark', false) === 'dark');
+});
+test('theme: with no (or junk) saved choice, follow the system', () => {
+  assert(resolveTheme(null, true) === 'dark');
+  assert(resolveTheme(null, false) === 'light');
+  assert(resolveTheme('purple', true) === 'dark');
+});
+test('theme: save/load round-trip, and blocked storage is safe', () => {
+  const data = {};
+  const store = { getItem: (k) => data[k] ?? null, setItem: (k, v) => { data[k] = v; } };
+  assert(loadSavedTheme(store) === null);
+  saveTheme('light', store);
+  assert(loadSavedTheme(store) === 'light');
+  const broken = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
+  assert(loadSavedTheme(broken) === null);
+  saveTheme('dark', broken); // must not throw
 });
 
 // --- Report ---

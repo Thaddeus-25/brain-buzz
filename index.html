@@ -7,10 +7,23 @@
   <meta name="description" content="Quick mixed mind-game rounds to keep your brain awake.">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Set the theme before the page paints, so there's no flash of the wrong colors.
+    // (Same rule as resolveTheme() in js/theme.js.)
+    try {
+      var t = localStorage.getItem('brainBuzz.theme');
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
   <main class="app">
+    <div class="topbar">
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch theme">☀</button>
+    </div>
+
     <!-- Menu screen -->
     <section id="menu" class="screen">
       <h1 class="logo">Brain<span class="accent">Buzz</span></h1>
@@ -41,12 +54,21 @@
         <div class="stat">Score <b id="hud-score">0</b></div>
         <div class="stat">Level <b id="hud-level">1</b></div>
         <div class="stat" id="hud-status"></div>
-        <button id="quit" class="btn small" type="button" title="Quit (Esc)">Quit</button>
+        <button id="pause" class="btn small" type="button" title="Pause (Esc)">Pause</button>
       </div>
       <div class="timer"><div id="timer-fill" class="timer-fill"></div></div>
       <h2 id="round-name" class="round-name"></h2>
       <div id="challenge" class="challenge"></div>
       <div id="feedback" class="feedback" aria-live="polite"></div>
+
+      <div id="pause-overlay" class="pause-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+        <div class="pause-card">
+          <h2 id="pause-title">Paused</h2>
+          <p class="hint">Timers are frozen. You'll get a fresh challenge when you resume.</p>
+          <button id="resume" class="btn primary" type="button">Resume (Esc)</button>
+          <button id="pause-quit" class="btn" type="button">Quit to menu</button>
+        </div>
+      </div>
     </section>
 
     <!-- Results screen -->
