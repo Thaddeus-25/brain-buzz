@@ -53,10 +53,15 @@ Each round module exports an object with the same shape (like a Java interface):
   id: 'math',                 // unique string
   name: 'Quick Math',         // shown above the challenge
   generate(level) -> challenge,   // pure: builds a new challenge for difficulty level (1, 2, 3, ...)
-  render(challenge, container, submit),  // draws UI into container; calls submit(answer) once
-  check(challenge, answer) -> boolean    // pure: is the answer correct?
+  render(challenge, container, submit) -> cleanup?,  // draws UI; may return a function that removes timers/listeners
+  check(challenge, answer) -> boolean,   // pure: is the answer correct?
+  answerText(challenge) -> string        // pure: correct answer shown after a miss
 }
 ```
+
+A challenge may also carry `studyMs` (delay before the round timer starts) and
+`extraSeconds` (added to the Endless round timer). Number Memory uses both, so long
+numbers get time to be memorized and typed.
 
 `generate` and `check` are pure functions (no DOM), so they are unit-testable.
 `render` owns all DOM for that round and calls `submit` exactly once.

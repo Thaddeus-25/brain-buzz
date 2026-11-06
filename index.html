@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brain Buzz</title>
+  <meta name="description" content="Quick mixed mind-game rounds to keep your brain awake.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <main class="app">
+    <!-- Menu screen -->
+    <section id="menu" class="screen">
+      <h1 class="logo">Brain<span class="accent">Buzz</span></h1>
+      <p class="tagline">Quick mixed rounds to keep your brain awake.</p>
+      <ul class="howto">
+        <li><b>Quick Math</b>: solve it and type the answer.</li>
+        <li><b>Color Clash</b>: pick the <em>ink</em> color, not the word.</li>
+        <li><b>Number Memory</b>: memorize the digits and type them back.</li>
+        <li><b>Odd One Out</b>: tap the symbol that's different.</li>
+      </ul>
+      <div class="modes">
+        <button class="mode" data-mode="endless" type="button">
+          <span class="mode-name">Endless</span>
+          <span class="mode-desc">3 lives · rounds get faster</span>
+          <span class="mode-best">Best: <b id="best-endless">0</b></span>
+        </button>
+        <button class="mode" data-mode="sprint" type="button">
+          <span class="mode-name">Sprint</span>
+          <span class="mode-desc">60 seconds · wrong = −2 s</span>
+          <span class="mode-best">Best: <b id="best-sprint">0</b></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Game screen -->
+    <section id="game" class="screen" hidden>
+      <div class="hud">
+        <div class="stat">Score <b id="hud-score">0</b></div>
+        <div class="stat">Level <b id="hud-level">1</b></div>
+        <div class="stat" id="hud-status"></div>
+        <button id="quit" class="btn small" type="button" title="Quit (Esc)">Quit</button>
+      </div>
+      <div class="timer"><div id="timer-fill" class="timer-fill"></div></div>
+      <h2 id="round-name" class="round-name"></h2>
+      <div id="challenge" class="challenge"></div>
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+    </section>
+
+    <!-- Results screen -->
+    <section id="results" class="screen" hidden>
+      <h2 id="results-title">Game over</h2>
+      <p class="final-score" id="final-score">0</p>
+      <p class="new-best" id="new-best" hidden>New best!</p>
+      <p class="final-detail" id="final-detail"></p>
+      <div class="row">
+        <button id="again" class="btn primary" type="button">Play again</button>
+        <button id="to-menu" class="btn" type="button">Menu</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
